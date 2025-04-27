@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost and Found Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>College Lost and Found Management System</h1>
+            <p>Helping students reconnect with their lost belongings</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#report-lost">Report Lost Item</a></li>
+            <li><a href="#report-found">Report Found Item</a></li>
+            <li><a href="#contact">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="report-lost" class="form-section">
+            <h2>Report a Lost Item</h2>
+            <form id="lostForm" action="/api/lost" method="POST">
+                <input type="text" name="name" placeholder="Item Name" required>
+                <textarea name="description" placeholder="Description" required></textarea>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+                <input type="text" name="location" placeholder="Location (e.g., Library, Cafeteria)" required>
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+    
+        <section id="report-found" class="form-section">
+            <h2>Report a Found Item</h2>
+            <form id="foundForm" action="/api/found" method="POST">
+                <input type="text" name="name" placeholder="Item Name" required>
+                <textarea name="description" placeholder="Description" required></textarea>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+                <input type="text" name="location" placeholder="Location (e.g., Library, Cafeteria)" required>
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+    
+        <section id="dashboard" class="form-section">
+            <h2>Dashboard</h2>
+            <div id="lostItems">
+                <h3>Lost Items</h3>
+                <ul></ul>
+            </div>
+            <div id="foundItems">
+                <h3>Found Items</h3>
+                <ul></ul>
+            </div>
+        </section>
+    </main>
+
+    <footer id="contact">
+        <div class="container">
+            <p>COME TO SPORTS ROOM GROUND FLOOR </p>
+            <p>&copy; kunal chauhan System</p>
+        </div>
+    </footer>
+    <script>
+    async function loadItems() {
+        const response = await fetch('/api/items');
+        const items = await response.json();
+
+        const lostItemsList = document.querySelector('#lostItems ul');
+        const foundItemsList = document.querySelector('#foundItems ul');
+
+        lostItemsList.innerHTML = '';
+        foundItemsList.innerHTML = '';
+
+        items.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${item.name} - ${item.description} (Date: ${item.date}, Location: ${item.location})`;
+
+            if (item.status === 'Lost') {
+                lostItemsList.appendChild(listItem);
+            } else {
+                foundItemsList.appendChild(listItem);
+            }
+        });
+    }
+
+    async function handleFormSubmit(event, formId, apiEndpoint, status) {
+        event.preventDefault();
+
+        const form = document.getElementById(formId);
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        data.status = status;
+
+        // Send data to the server
+        await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        // Add the new item to the list dynamically
+        const list = status === 'Lost' ? document.querySelector('#lostItems ul') : document.querySelector('#foundItems ul');
+        const listItem = document.createElement('li');
+        listItem.textContent = `${data.name} - ${data.description} (Date: ${data.date}, Location: ${data.location})`;
+        list.appendChild(listItem);
+
+        // Reset the form
+        form.reset();
+    }
+
+    document.getElementById('lostForm').addEventListener('submit', (event) => {
+        handleFormSubmit(event, 'lostForm', '/api/lost', 'Lost');
+    });
+
+    document.getElementById('foundForm').addEventListener('submit', (event) => {
+        handleFormSubmit(event, 'foundForm', '/api/found', 'Found');
+    });
+
+    // Load items on page load
+    loadItems();
+</script>
+</body>
+</html>
